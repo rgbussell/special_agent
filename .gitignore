@@ -5,3 +5,7 @@ __pycache__
 
 .chainlit
 .files
+
+data/
+
+chainlit.md
