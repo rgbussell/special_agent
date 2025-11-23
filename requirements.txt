@@ -1,0 +1,11 @@
+crewai
+langchain-ollama
+chromadb
+watchdog
+python-dotenv
+chainlit
+pypdf
+docx
+pymupdf
+pillow
+python-imaplib-tools
