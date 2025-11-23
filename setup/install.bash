@@ -16,6 +16,8 @@ if ! command -v curl > /dev/null 2>&1; then
     sudo apt install -y curl || (echo "curl install failed" && exit 1)
 fi
 
+
+
 # Optional: Auto-install NVIDIA/CUDA if missing (uncomment if needed)
 if ! command -v nvidia-smi > /dev/null 2>&1; then
     echo "NVIDIA missing—installing CUDA 12.6..."
@@ -68,6 +70,21 @@ python -m venv venv
 source venv/bin/activate
 pip install --upgrade pip
 pip install --no-warn-conflicts crewai langchain-ollama langchain-community chromadb watchdog python-dotenv chainlit pypdf python-docx pymupdf pillow imap-tools
+
+# install pytesseract if missing -- this install the engine later we need
+# to install the python wrapper into the venv
+if ! command -v tesseract > /dev/null 2>&1; then
+    echo "Installing tesseract-ocr..."
+    sudo apt update
+    sudo apt install -y tesseract-ocr libtesseract-dev
+fi
+
+# now install pytesseract python wrapper into the venv
+source venv/bin/activate
+pip install pytesseract
+
+echo checking pytesseract install
+python -c "import pytesseract" || { echo "pytesseract package failed to import"; exit 1; }
 
 # check installs
 echo "Verifying python dependencies can be imported..."

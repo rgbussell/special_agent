@@ -9,9 +9,9 @@ if [ $? -ne 0 ]; then
     echo "FAIL $model"
 fi
 
-model="llama3.2:3b-instruct"
+model="llama3.2:3b"
 echo "Testing model: $model"
-ollama run llama3.2:3b-instruct "Hello, world!"
+ollama run llama3.2:3b "Hello, world!"
 if [ $? -ne 0 ]; then
     echo "FAIL $model"
 fi
