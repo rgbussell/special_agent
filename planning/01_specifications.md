@@ -1,5 +1,6 @@
 ## main features
 * Homework help agents for all subjects
+* Multi-turn tutoring with saved session state
 * Schedule coordination for school work and activities
 * User interface of chat and voice
 * Watches a folder for new homework files (PDF, DOCX, TXT, images)

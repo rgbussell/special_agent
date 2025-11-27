@@ -1,0 +1,1 @@
+sudo tcpdump -i any host api.openai.com -n
