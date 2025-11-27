@@ -2,7 +2,7 @@ from langchain_community.vectorstores import Chroma
 from langchain_ollama import OllamaEmbeddings
 import os
 
-embeddings = OllamaEmbeddings(model="llama3.2:3b-instruct", base_url="http://localhost:11434")
+embeddings = OllamaEmbeddings(model="qwen2.5:32b-instruct-q4_K_M", base_url="http://localhost:11434")
 DB_PATH = "./data/vector_db"
 
 def get_knowledge_base():

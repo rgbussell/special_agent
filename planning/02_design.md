@@ -57,6 +57,18 @@ homework-agent/<br>
 | deepseek-r1:70b-q4_K_M | Q4 | ~9.5 GB | Exceptional at homework/planning | Fast | Available on Ollama library |
 | llama3.2:3b-instruct | Q8 | ~3 GB | Great for fast tutors | Very fast | ollama pull llama3.2:3b |
 
+## tutor model choice
+Want to use llama3.2:3b-instruct as this was tuned for following user prompts, dialogs and has fewer hallucinations.
+However, this is not currently released, so evaluating these moodel: 
+qwen2.5:14b-instruct-q6_K
+qwen2.5:32b-instruct-q4_K_M
+
+Model consideration
+* size, of course
+* speed of inference (minor consideration)
+* context length
+* performance as math and language instructor
+
 # UI choices
 streamlit versus chainlit: In this project I opt for chainlit because the llm/chat support<br>
 is natively built which may help make the UI more conversational. In contrast streamlit <br>

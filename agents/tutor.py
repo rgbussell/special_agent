@@ -15,7 +15,7 @@ class LocalLLM:
 
 def create_tutor(subject: str):
     llm = ChatOllama(
-        model="llama3.2:3b-instruct",
+        model="qwen2.5:14b-instruct-q4_K_M",
         base_url="http://localhost:11434",
         temperature=0.7
     )

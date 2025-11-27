@@ -41,25 +41,38 @@ if ! command -v ollama > /dev/null 2>&1; then
     sudo usermod -aG video $USER  # GPU access
 fi
 
-# Pull model with VRAM check
+# VRAM check
+echo gpu VRAM is $(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits) MB
+
+# Pull model
 MODEL="qwen2.5:14b-instruct-q6_K"
 if ! ollama list | grep -q "$MODEL"; then
-    echo "Pulling $MODEL (may take 30-60 min; ~40 GB download)..."
-    echo gpu VRAM is $(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits) MB
+    echo "Pulling $MODEL"
     OLLAMA_MAX_LOADED_MODELS=1 ollama pull "$MODEL" || {
         echo "Pull failed—trying smaller quant..."
         ollama pull qwen2.5:14b-instruct-q6_K
     }
 fi
 
-# Pull model with VRAM check
-MODEL="llama3.2:3b"
+MODEL="qwen2.5:32b-instruct-q4_K_M"
 if ! ollama list | grep -q "$MODEL"; then
-    echo "Pulling $MODEL (may take 30-60 min; ~40 GB download)..."
-    echo gpu VRAM is $(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits) MB
+    echo "Pulling $MODEL"
     OLLAMA_MAX_LOADED_MODELS=1 ollama pull "$MODEL" || {
-        echo "Pull failed"
-        exit 1
+        echo "Pull failed—trying smaller quant..."
+        ollama pull qwen2.5:32b-instruct-q4_K_M
+    }
+fi
+
+
+MODEL="qwen2.5:3b-instruct"
+if ! ollama list | grep -q "$MODEL"; then
+    echo "Pulling $MODEL"
+    OLLAMA_MAX_LOADED_MODELS=1 ollama pull "$MODEL" || {
+        echo "Pull failed—trying alternative..."
+        ollama pull qwen2.5:3b-instruct || {
+            echo "Alternative pull also failed"
+            exit 1
+        }
     }
 fi
 
@@ -86,7 +99,7 @@ python -c "import pytesseract" || { echo "pytesseract package failed to import";
 
 # check installs
 echo "Verifying python dependencies can be imported..."
-for pkg in crewai langchain_ollama langchain_community chromadb watchdog python_dotenv chainlit pypdf python_docx pymupdf pillow imap_tools; do
+for pkg in langchain_ollama langchain_community chromadb watchdog python_dotenv chainlit pypdf python_docx pymupdf pillow imap_tools; do
     if [ "$pkg" == "langchain_ollama" ]; then
         pkg="langchain_ollama"  # Adjust for import name
     elif [ "$pkg" == "langchain_community" ]; then

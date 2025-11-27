@@ -20,6 +20,24 @@
             "program": "run.py",
             "console": "integratedTerminal",
             "workingDirectory": "${workspaceFolder}/special_agent"
+        },
+        {
+            "name": "Debug Chainlit App",
+            "type": "python",
+            "request": "launch",
+            "module": "chainlit",
+            "args": [
+                "run",
+                "ui/app.py",
+                "-w",                     // auto-reload on save
+                "--port", "8000"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "OLLAMA_BASE_URL": "http://localhost:11434"
+            },
+            "console": "integratedTerminal",
+            "justMyCode": false
         }
     ]
 }

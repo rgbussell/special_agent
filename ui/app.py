@@ -1,7 +1,7 @@
 import chainlit as cl
 from langchain_ollama import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import RunnablePassthrough
+from langchain_core.runnables import RunnablePassthrough, RunnableLambda
 from ingest.email_checker import check_emails
 from ingest.file_watcher import HomeworkHandler, Observer
 from agents.knowledge import add_documents, retrieve_relevant_docs
@@ -15,7 +15,7 @@ planner_prompt = ChatPromptTemplate.from_template(
     "You are an expert study planner. Based on this homework context: {context}\nUser request: {input}\nCreate a detailed daily study plan in markdown."
 )
 planning_chain = (
-    {"context": retrieve_relevant_docs | (lambda docs: "\n".join([d.page_content for d in docs])), "input": RunnablePassthrough()}
+    {"context": retrieve_relevant_docs | RunnableLambda(lambda docs: "\n".join([d.page_content for d in docs])), "input": RunnablePassthrough()}
     | planner_prompt
     | llm
 )
@@ -30,7 +30,7 @@ tutor_chains = {}
 for subject, prompt in tutor_prompts.items():
     tutor_prompt = ChatPromptTemplate.from_template(prompt)
     tutor_chains[subject] = (
-        {"context": retrieve_relevant_docs | (lambda docs: "\n".join([d.page_content for d in docs])), "input": RunnablePassthrough()}
+        {"context": retrieve_relevant_docs | RunnableLambda(lambda docs: "\n".join([d.page_content for d in docs])), "input": RunnablePassthrough()}
         | tutor_prompt
         | llm
     )
