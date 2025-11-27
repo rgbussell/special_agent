@@ -45,7 +45,7 @@ homework-agent/<br>
 | Vector Database | ChromaDB (local) | < 1 GB | Runs on disk |
 | File/Directory Watcher | watchdog (Python) | negligible | Local |
 | Email Ingestion | IMAP + Python (local script) | negligible | Local |
-| Multi-Agent Framework | CrewAI Workflows | — | Fully local |
+| Multi-Agent Framework | LangChain Workflows | — | Fully local |
 | UI | Chainlit | < 1 GB | Runs locally in browser |
 
 ## model consistent with 12 GB VRAM
