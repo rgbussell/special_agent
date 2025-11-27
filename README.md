@@ -57,3 +57,13 @@ so the calls were not successful which was a good save.
 To eliminate the calls to openai I am rearchitecting the approach around
 using LangChain which does not have the openai connection through crewai.
 Tagging the branch prior to this change as 0.0.1
+
+# Driving focus on the materials supplied
+The LLM has an assignment pdf but does not seem to be using it to 
+drive its responses. What I am trying to improve the focus on the
+relevant materials:
+* Improve the prompt to direct it towards the materials
+* Increase the retrieval count
+* Use similarity search with score
+* Inject the full text, not just summaries
+* Add a force-read prep step 
