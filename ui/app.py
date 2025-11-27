@@ -1,72 +1,95 @@
-# ui/app.py
+# app.py — 100% LOCAL, WORKS TODAY
 import chainlit as cl
-from crewai import Task, Crew
-from agents.planner import planner
-from agents.tutor import create_tutor
-from agents.knowledge import add_documents
-from ingest.file_watcher import HomeworkHandler, Observer
-from ingest.email_checker import check_emails
-import os
-import asyncio
+from langchain_ollama import ChatOllama
+from langchain_community.vectorstores import Chroma
+from langchain_ollama import OllamaEmbeddings
+from langchain_core.prompts import ChatPromptTemplate
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+import fitz, os, asyncio, pytesseract
+from PIL import Image
+from imap_tools import MailBox, AND
+from dotenv import load_dotenv
+load_dotenv()
 
-os.environ.pop("OPENAI_API_KEY", None)
+# === CONFIG ===
+llm = ChatOllama(model="qwen2.5:14b-instruct-q6_K", temperature=0.3)
+embeddings = OllamaEmbeddings(model="llama3.2:3b")
+db = Chroma(persist_directory="./db", embedding_function=embeddings)
 
-observer = None
+# === FILE WATCHER ===
+class Handler(FileSystemEventHandler):
+    def on_created(self, event):
+        if event.is_directory: return
+        path = event.src_path
+        text = ""
+        if path.endswith(".pdf"):
+            doc = fitz.open(path)
+            text = " ".join(p.get_text() for p in doc)
+        elif path.endswith((".png",".jpg",".jpeg")):
+            text = pytesseract.image_to_string(Image.open(path))
+        elif path.endswith(".txt"):
+            text = open(path).read()
+        
+        if text.strip():
+            db.add_texts([text], metadatas=[{"source": path}])
+            cl.run_sync(cl.Message(content=f"Added: {os.path.basename(path)}").send())
+
+observer = Observer()
+observer.schedule(Handler(), path="./data/inbox", recursive=False)
+
+# === EMAIL CHECK ===
+def check_emails():
+    try:
+        with MailBox('imap.gmail.com').login(os.getenv("GMAIL"), os.getenv("GAPP"), 'INBOX') as mailbox:
+            for msg in mailbox.fetch(AND(seen=False, subject='homework')):
+                db.add_texts([msg.text or msg.html], [{"source": "email"}])
+    except: pass
+
+# === PLANNER PROMPT ===
+planner_prompt = ChatPromptTemplate.from_messages([
+    ("system", "You are an expert academic coach. Create a detailed daily study plan in markdown."),
+    ("human", "Here are my current assignments:\n{context}\n\nMake a realistic plan for the next 7 days.")
+])
+
+# === TUTOR PROMPT ===
+tutor_prompts = {
+    "math": "You are a world-class math tutor. Explain step-by-step with LaTeX.",
+    "physics": "You are a world-class physics tutor. Use clear reasoning.",
+    # add more as needed
+}
 
 @cl.on_chat_start
 async def start():
-    global observer
-    observer = Observer()
-    observer.schedule(HomeworkHandler(), path="./data/inbox", recursive=False)
     observer.start()
-
-    try:
-        emails = check_emails()
-        if emails:
-            add_documents(emails, [{"source": "email", "type": "assignment"}])
-            await cl.Message(content=f"Found {len(emails)} new homework emails!").send()
-    except Exception as e:
-        print(f"Email check failed: {e}")
-
-    await cl.Message(content="Homework Agent ready! Drop files in `data/inbox` or say 'make a plan' or 'math tutor'").send()
+    check_emails()
+    await cl.Message(content="Homework Agent ready! Drop files in data/inbox or ask anything.").send()
 
 @cl.on_message
 async def main(message: cl.Message):
-    user_input = message.content.lower().strip()
+    txt = message.content.lower()
 
-    if "plan" in user_input or "schedule" in user_input:
-        task = Task(
-            description="Create a detailed daily study plan based on all recent homework from files and emails.",
-            agent=planner,
-            expected_output="A clean markdown study schedule with daily tasks and deadlines."
-        )
-        crew = Crew(agents=[planner], tasks=[task], verbose=True, memory=False)
-        try:
-            result = crew.kickoff()
-            await cl.Message(content=str(result)).send()
-        except Exception as e:
-            await cl.Message(content=f"Error: {str(e)}").send()
+    if "plan" in txt or "schedule" in txt:
+        docs = db.similarity_search("homework assignment", k=10)
+        context = "\n\n".join(d.page_content for d in docs)
+        chain = planner_prompt | llm
+        result = await chain.ainvoke({"context": context})
+        await cl.Message(content=result.content).send()
 
-    elif any(s in user_input for s in ["math", "physics", "chemistry", "history", "english", "biology"]):
-        subject = next(s for s in ["math", "physics", "chemistry", "history", "english", "biology"] if s in user_input)
-        tutor = create_tutor(subject)
-        task = Task(
-            description=f"You are tutoring me in {subject}. Ask what I need help with.",
-            agent=tutor,
-            expected_output="Engaging tutoring session"
-        )
-        crew = Crew(agents=[tutor], tasks=[task], verbose=True, memory=False)
-        try:
-            result = crew.kickoff()
-            await cl.Message(content=f"**{subject.capitalize()} Tutor is here!**\n\n{result}").send()
-        except Exception as e:
-            await cl.Message(content=f"Tutor error: {e}").send()
+    elif any(s in txt for s in tutor_prompts):
+        subject = next(s for s in tutor_prompts if s in txt)
+        system = tutor_prompts[subject]
+        chain = ChatPromptTemplate.from_messages([
+            ("system", system),
+            ("human", "{input}")
+        ]) | llm
+        cl.user_session.set("chain", chain)
+        await cl.Message(content=f"{subject.capitalize()} Tutor ready! What do you need help with?").send()
+
+    elif cl.user_session.get("chain"):
+        chain = cl.user_session.get("chain")
+        result = await chain.ainvoke({"input": message.content})
+        await cl.Message(content=result.content).send()
 
     else:
-        await cl.Message(content="Say **make a plan** or **math tutor** to start!").send()
-
-@cl.on_stop
-def stop():
-    if observer:
-        observer.stop()
-        observer.join()
+        await cl.Message(content="Say 'make a plan' or 'math tutor' to start!").send()

@@ -52,3 +52,8 @@ Use tcpdump to check if the open ai calls are still being made. I found
 that even when ChatOllama was being used for chat that the open ai calls
 were in fact still being made. I had OPENAI_API_KEY set to a fake value
 so the calls were not successful which was a good save.
+
+# removing the crewai dependency
+To eliminate the calls to openai I am rearchitecting the approach around
+using LangChain which does not have the openai connection through crewai.
+Tagging the branch prior to this change as 0.0.1
