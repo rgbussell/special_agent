@@ -7,7 +7,7 @@ import fitz  # PyMuPDF for PDF
 from docx import Document  # DOCX
 from PIL import Image
 import pytesseract
-from agents.dep_knowledge import add_documents
+from agents.knowledge import add_documents
 import logging
 
 class HomeworkHandler(FileSystemEventHandler):

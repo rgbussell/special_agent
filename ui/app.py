@@ -4,7 +4,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough, RunnableLambda
 from ingest.email_checker import check_emails
 from ingest.file_watcher import HomeworkHandler, Observer
-from agents.dep_knowledge import add_documents, retrieve_relevant_docs
+from agents.knowledge import add_documents, retrieve_relevant_docs
 import os
 import logging
 
