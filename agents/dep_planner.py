@@ -14,6 +14,8 @@ llm = ChatOllama(
     temperature=0.3
 )
 
+raise NotImplementedError("This module is deprecated. Use dep_planner.py instead.")
+
 # Bypass CrewAI's broken LLM routing with a safe wrapper
 class LocalLLM:
     def __init__(self, llm):

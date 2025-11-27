@@ -5,6 +5,8 @@ from crewai import Agent
 
 os.environ.pop("OPENAI_API_KEY", None)
 
+raise NotImplementedError("This module is deprecated. Use dep_tutor.py instead.")
+
 class LocalLLM:
     def __init__(self, llm):
         self.llm = llm

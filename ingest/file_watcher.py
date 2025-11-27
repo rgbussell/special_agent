@@ -1,3 +1,4 @@
+from email.mime import text
 import time
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -6,7 +7,8 @@ import fitz  # PyMuPDF for PDF
 from docx import Document  # DOCX
 from PIL import Image
 import pytesseract
-from agents.knowledge import add_documents
+from agents.dep_knowledge import add_documents
+import logging
 
 class HomeworkHandler(FileSystemEventHandler):
     def on_created(self, event):
@@ -14,12 +16,23 @@ class HomeworkHandler(FileSystemEventHandler):
             return
         path = Path(event.src_path)
         if path.suffix.lower() in {".pdf", ".docx", ".txt", ".png", ".jpg", ".jpeg"}:
-            print(f"New homework detected: {path.name}")
+            logging.info(f"New file detected: {path.name}")
             text = self.extract_text(path)
-            add_documents([text], [{"source": path.name, "type": "homework"}])
-            # Optional: Trigger UI update via file flag
-            with open("data/latest_homework.txt", "w") as f:
-                f.write(text)
+
+            if text.strip():
+                logging.info(f"Extracted text length: {len(text)} characters")
+                logging.info(f"First 500 chars: {text[:500]!r}")
+                logging.info(f"Contains 'Book Thief': {'Book Thief' in text}")
+                logging.info(f"Contains 'Socratic': {'Socratic' in text}")
+                logging.info("-" * 80)
+ 
+                add_documents([text], [{"source": path.name, "type": "homework"}])
+
+                # Optional: Trigger UI update via file flag
+                with open("data/latest_homework.txt", "w") as f:
+                    f.write(text)
+            else:
+                logging.warning(f"No text extracted from {path.name}")
 
     def extract_text(self, path: Path) -> str:
         if path.suffix == ".pdf":

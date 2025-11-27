@@ -4,16 +4,35 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough, RunnableLambda
 from ingest.email_checker import check_emails
 from ingest.file_watcher import HomeworkHandler, Observer
-from agents.knowledge import add_documents, retrieve_relevant_docs
+from agents.dep_knowledge import add_documents, retrieve_relevant_docs
 import os
+import logging
 
 # Pure Ollama LLM — no OpenAI anywhere
-llm = ChatOllama(model="qwen2.5:14b-instruct-q6_K", base_url="http://localhost:11434", temperature=0.3)
+llm = ChatOllama(
+    model="qwen2.5:14b-instruct-q6_K", 
+    base_url="http://localhost:11434", 
+    temperature=0.3)
 
 # Planning chain
-planner_prompt = ChatPromptTemplate.from_template(
-    "You are an expert study planner. Based on this homework context: {context}\nUser request: {input}\nCreate a detailed daily study plan in markdown."
-)
+planner_prompt = ChatPromptTemplate.from_template("""
+    You are an expert study planner. Your #1 priority is to base EVERY recommendation on the actual homework assignments below.
+
+    HOMEWORK ASSIGNMENTS (YOU MUST USE THESE):
+    {context}
+
+    USER REQUEST: {input}
+
+    Rules:
+    1. Quote specific problems, topics, or deadlines from the homework above.
+    2. Never invent assignments — only use what is explicitly written.
+    3. Break down every single task mentioned.
+    4. Create a realistic daily schedule that completes everything on time.
+    5. If no homework is found, say "No assignments detected in inbox/emails" and ask the user to drop files.
+
+    Respond in clean markdown with dates and bullet points.
+""")
+
 planning_chain = (
     {"context": retrieve_relevant_docs | RunnableLambda(lambda docs: "\n".join([d.page_content for d in docs])), "input": RunnablePassthrough()}
     | planner_prompt
@@ -56,9 +75,48 @@ async def main(message: cl.Message):
     user_input = message.content.lower()
     
     if "plan" in user_input or "schedule" in user_input:
-        result = await planning_chain.ainvoke(message.content)
-        await cl.Message(content=result.content).send()
-    
+        logging.info(f"\n=== PLANNING DEBUG START ===")
+        logging.info(f"Raw user input: {message.content}")
+        
+        # Step 1: Call retrieval directly (bypass chain for now)
+        raw_query = message.content  # This is what's passed to retrieve_relevant_docs
+        logging.info(f"Query sent to retrieval: '{raw_query}'")
+        
+        docs = retrieve_relevant_docs(raw_query, k=30)  # Increase k for more chances
+        logging.info(f"Retrieved {len(docs)} docs from DB (total DB count should be >0)")
+        
+        if docs:
+            for i, doc in enumerate(docs[:3]):  # Preview first 3
+                logging.info(f"  Doc {i+1}: source={doc.metadata.get('source', 'unknown')}, len={len(doc.page_content)}, preview='{doc.page_content[:200]}'")
+        else:
+            logging.info("  ZERO DOCS — check if DB is populated (file watcher/email ran?)")
+        
+        # Step 2: Test the lambda conversion
+        if docs:
+            context_str = "\n\n---\n\n".join([f"DOCUMENT {i+1} (source: {d.metadata.get('source','?')}):\n{d.page_content}" 
+                                            for i, d in enumerate(docs)])
+            logging.info(f"Lambda output (context_str) length: {len(context_str)}")
+            logging.info(f"Lambda preview: {context_str[:500]!r}")
+        else:
+            context_str = "No homework found — check data/inbox."
+            logging.info(f"Lambda fallback: {context_str}")
+        
+        # Step 3: Test full chain invoke
+        try:
+            result = await planning_chain.ainvoke(message.content)
+            logging.info(f"Chain result type: {type(result)}")
+            if hasattr(result, 'content'):
+                logging.info(f"LLM output preview: {result.content[:500]}")
+                logging.info(f"Does output mention 'Book Thief'? {'Book Thief' in result.content}")
+            else:
+                logging.info(f"Raw result preview: {str(result)[:500]}")
+        except Exception as e:
+            logging.info(f"Chain error: {e}")
+
+        logging.info("=== PLANNING DEBUG END ===\n")
+
+        await cl.Message(content=result.content if hasattr(result, 'content') else str(result)).send()
+
     elif any(subject in user_input for subject in tutor_chains):
         subject = next(s for s in tutor_chains if s in user_input)
         cl.user_session.set("tutor_subject", subject)
