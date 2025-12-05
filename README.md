@@ -67,3 +67,18 @@ relevant materials:
 * Use similarity search with score
 * Inject the full text, not just summaries
 * Add a force-read prep step 
+
+# Success for Phase 1
+We can respond to queries -- read local files into the vector database,
+query it and return relevant responses. Below are some screenshots
+showing the response a query about The Book Thief. Here we see the pdf
+file of the book was added to the vector database, the database query
+returns relevant reponses related to the book.
+
+![CLI of response 1](assets/cli1.png)
+![CLI of response 2](asstes/cli2.png)
+
+# Success: Emails can be read into vector database
+Assignments can be read from email!
+Here the UI integration is also shown.
+![UI showing emailed homework](assets/email_homewok.png)

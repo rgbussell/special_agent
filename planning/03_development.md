@@ -6,6 +6,7 @@ access to shared tools
 ## Phase 1
 * Homework helper chat bot that helps with spelling bee and honors math exam prep
 * Database should hold memory about previous sessions
+* Agent that identifies and can help identify home assignment due dates
 
 ## Phase 2
 * calendar organizer agent that can access assignments and calendar

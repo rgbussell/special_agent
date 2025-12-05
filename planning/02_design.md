@@ -79,3 +79,9 @@ chromadb to be used as a vector database for storing shared information
 
 # Security considerations
 API will and secrets will be handled using .dotenv approach
+
+# Agents
+* knowledge
+* homework tracker
+* file watcher
+* email watcher

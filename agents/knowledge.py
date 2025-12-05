@@ -9,6 +9,8 @@ Methods are provided for adding to the knowledge base, retrieving relevant docum
 and returning them based on relevance scores.
 """
 
+MAX_DOCUMENTS = 2000
+
 config = {
     "model": "qwen2.5:32b-instruct-q4_K_M",
     "base_url": "http://localhost:11434",
@@ -25,6 +27,10 @@ def get_knowledge_base():
     return Chroma(
         persist_directory=config['db_path'], 
         embedding_function=embeddings)
+
+def get_all_documents(k=MAX_DOCUMENTS):
+    db = get_knowledge_base()
+    return db.similarity_search("", k=k)  # empty query = everything
 
 def add_documents(texts, metadatas=None):
     # Add text and metadata to the knowledg base

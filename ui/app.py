@@ -5,7 +5,8 @@ from langchain_core.runnables import RunnablePassthrough, RunnableLambda
 from ingest.email_checker import check_emails
 from ingest.file_watcher import HomeworkHandler, Observer
 from agents.knowledge import add_documents, retrieve_relevant_docs
-import os
+from agents.homework_tracker import build_homework_report
+from agents.knowledge import get_knowledge_base
 import logging
 
 # Pure Ollama LLM — no OpenAI anywhere
@@ -68,7 +69,7 @@ async def start():
         add_documents(emails, [{"source": "email", "type": "assignment"}])
         await cl.Message(content=f"Found {len(emails)} new homework emails!").send()
     
-    await cl.Message(content="Homework Agent ready! Drop files in `data/inbox` or say 'make a plan' or 'math tutor'.").send()
+    await cl.Message(content="Homework Agent ready! Drop files in `data/inbox` or say 'make a plan' or 'math tutor' or 'homework tracker'.").send()
 
 @cl.on_message
 async def main(message: cl.Message):
@@ -128,6 +129,13 @@ async def main(message: cl.Message):
         subject = cl.user_session.get("tutor_subject")
         result = await tutor_chains[subject].ainvoke(message.content)
         await cl.Message(content=f"**{subject.capitalize()} Tutor:**\n{result.content}").send()
+
+    elif any(trigger in user_input for trigger in ["homework tracker"]):
+        logging.info(f"\nUSER ASKED FOR HOMEWORK TRACKER: {message.content}")
+        db = get_knowledge_base()
+        all_docs = db.similarity_search("", k=200)  # get everything
+        report = build_homework_report(all_docs, message.content)
+        await cl.Message(content=report).send()
     
     else:
         await cl.Message(content="Say 'make a plan' or 'math tutor' to begin!").send()

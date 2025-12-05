@@ -14,12 +14,11 @@
             "workingDirectory": "${workspaceFolder}/special_agent"
         },
         {
-            "name": "launch app from run.py",
-            "type": "debugpy",
+            "name": "Run Chainlit (bash)",
+            "type": "node",
             "request": "launch",
-            "program": "run.py",
-            "console": "integratedTerminal",
-            "workingDirectory": "${workspaceFolder}/special_agent"
+            "program": "${workspaceFolder}/run.bash",
+            "console": "integratedTerminal"
         },
         {
             "name": "Debug Chainlit App",

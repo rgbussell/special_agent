@@ -1,4 +1,5 @@
 import chainlit as cl
+import os
 
 # This makes Python treat the current folder as a package
 import sys
