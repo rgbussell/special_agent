@@ -3,6 +3,10 @@ from dotenv import load_dotenv
 import os
 load_dotenv()
 
+"""
+This module checks a gmail inbox for messages with subject 'homework'
+and returns their content for further processing.
+"""
 def check_emails():
     emails = []
     try:

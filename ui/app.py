@@ -102,18 +102,19 @@ async def main(message: cl.Message):
             logging.info(f"Lambda fallback: {context_str}")
         
         # Step 3: Test full chain invoke
-        try:
-            result = await planning_chain.ainvoke(message.content)
-            logging.info(f"Chain result type: {type(result)}")
-            if hasattr(result, 'content'):
-                logging.info(f"LLM output preview: {result.content[:500]}")
-                logging.info(f"Does output mention 'Book Thief'? {'Book Thief' in result.content}")
-            else:
-                logging.info(f"Raw result preview: {str(result)[:500]}")
-        except Exception as e:
-            logging.info(f"Chain error: {e}")
+        if True:
+            try:
+                result = await planning_chain.ainvoke(message.content)
+                logging.info(f"Chain result type: {type(result)}")
+                if hasattr(result, 'content'):
+                    logging.info(f"LLM output preview: {result.content[:500]}")
+                    logging.info(f"Does output mention 'Book Thief'? {'Book Thief' in result.content}")
+                else:
+                    logging.info(f"Raw result preview: {str(result)[:500]}")
+            except Exception as e:
+                logging.info(f"Chain error: {e}")
 
-        logging.info("=== PLANNING DEBUG END ===\n")
+            logging.info("=== PLANNING DEBUG END ===\n")
 
         await cl.Message(content=result.content if hasattr(result, 'content') else str(result)).send()
 

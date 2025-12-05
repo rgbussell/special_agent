@@ -2,14 +2,32 @@ from langchain_community.vectorstores import Chroma
 from langchain_ollama import OllamaEmbeddings
 import logging
 
+"""
+This module handles the knowledge base for the special agent.
+Here we create a vector data store using ChromaDB and Ollama embeddings.
+Methods are provided for adding to the knowledge base, retrieving relevant documents
+and returning them based on relevance scores.
+"""
 
-embeddings = OllamaEmbeddings(model="qwen2.5:32b-instruct-q4_K_M", base_url="http://localhost:11434")
-DB_PATH = "./data/vector_db"
+config = {
+    "model": "qwen2.5:32b-instruct-q4_K_M",
+    "base_url": "http://localhost:11434",
+    'db_path': './data/vector_db'
+}
+
+embeddings = OllamaEmbeddings(
+    model=config['model'], 
+    base_url=config['base_url'])
 
 def get_knowledge_base():
-    return Chroma(persist_directory=DB_PATH, embedding_function=embeddings)
+    #Initialize or retrieve the Chroma vector store.
+    # define the embedding function
+    return Chroma(
+        persist_directory=config['db_path'], 
+        embedding_function=embeddings)
 
 def add_documents(texts, metadatas=None):
+    # Add text and metadata to the knowledg base
     db = get_knowledge_base()
     logging.info(f"Adding {len(texts)} document(s) to db")
     for i, text in enumerate(texts):
@@ -19,6 +37,7 @@ def add_documents(texts, metadatas=None):
     logging.info(f"ChromaDB now has {db._collection.count()} documents total")
 
 def retrieve_relevant_docs(query, k=30):
+    # retrieve documents from database based on relevance to query
     db = get_knowledge_base()
     logging.info(f"\nQUERY: {query!r}")
     logging.info(f"Total docs in DB: {db._collection.count()}")

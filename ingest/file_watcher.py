@@ -10,6 +10,14 @@ import pytesseract
 from agents.knowledge import add_documents
 import logging
 
+"""
+This module watches a directory for new homework files
+and adds them to the knowledge base.
+It gets a file system event when a new file is created.
+Depending on the file type, an appropriate tools is used.
+Extracted text is added to the knowledge base w/ fxn call.
+"""
+
 class HomeworkHandler(FileSystemEventHandler):
     def on_created(self, event):
         if event.is_directory:
@@ -22,9 +30,6 @@ class HomeworkHandler(FileSystemEventHandler):
             if text.strip():
                 logging.info(f"Extracted text length: {len(text)} characters")
                 logging.info(f"First 500 chars: {text[:500]!r}")
-                logging.info(f"Contains 'Book Thief': {'Book Thief' in text}")
-                logging.info(f"Contains 'Socratic': {'Socratic' in text}")
-                logging.info("-" * 80)
  
                 add_documents([text], [{"source": path.name, "type": "homework"}])
 
