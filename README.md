@@ -1,5 +1,10 @@
 ## special_agent
-Experiments in connecting agents, memory management, communication, team work and love
+Agents, memory management, communication, team work and family
+This is a multi-agent system that ingest email and local files
+to provide chat-based help with knowing what my kid's homework 
+assignment are. Also provides tutoring in specific to the topics at
+hand. To keep things safe (and free of charge) the LLMs are run
+locally without API calls.
 
 ## homework scheduler, awareness, organizer and tutor
 * Provide a data secure way to automate the process of keeping track
